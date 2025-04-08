@@ -1,0 +1,7 @@
+build
+.gradle
+cmake
+cmake-build-debug
+mc-build
+.idea
+.json

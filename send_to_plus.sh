@@ -1,0 +1,1 @@
+scp -r ~/little_human_sdk lrl@192.168.123.11:~

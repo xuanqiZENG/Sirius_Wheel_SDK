@@ -1,0 +1,1 @@
+lcmtypes/gamepad_lcmt.class lcmtypes/imu_lcmt.class lcmtypes/leg_control_command_lcmt.class lcmtypes/leg_control_data_lcmt.class
