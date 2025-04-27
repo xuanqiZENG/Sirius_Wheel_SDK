@@ -64,8 +64,8 @@ const float whl_offset[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
 #define KI_MIN (-150.0f)
 #define KI_MAX (150.0f)
-#define T_MIN (-25.0f)
-#define T_MAX (25.0f)
+#define T_MIN (-28.0f)
+#define T_MAX (28.0f)
 
 typedef struct USB_CMD_Pack {
     float p_cmd_;

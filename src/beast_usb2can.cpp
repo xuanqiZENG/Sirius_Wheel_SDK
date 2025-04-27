@@ -114,6 +114,9 @@ void Beast_USB2CAN::initialized_cmd_from_controller(){
         controller_lowcmd_.tau_ff[i] = 0.0;
         controller_lowcmd_.tau_ff[i] = 0.0;
         controller_lowcmd_.tau_ff[i] = 0.0;
+        controller_lowcmd_.tau_des[i] = 0.0;
+        controller_lowcmd_.tau_des[i] = 0.0;
+        controller_lowcmd_.tau_des[i] = 0.0;
     }
 
 }
@@ -367,48 +370,86 @@ void Beast_USB2CAN::publish_data2Controller(){
 
 void Beast_USB2CAN::joint_leg_control_motor(){
     mutex_cmd_data.lock();
-
-    for (int i = 0; i < 6; i++)
-    {
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = (controller_lowcmd_.q_des[i] / leg_side_sign[i]) + leg_offset[i];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = controller_lowcmd_.qd_des[i] / leg_side_sign[i];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = controller_lowcmd_.kp_joint[i];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = controller_lowcmd_.kd_joint[i];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_ff[i]* leg_side_sign[i]; 
+    for (int i = 0; i<16; i++){
+        controller_lowcmd_.tau_des[i] = controller_lowcmd_.kp_joint[i] * (controller_lowcmd_.q_des[i] - robot_lowdata_.q[i]) +
+                                       controller_lowcmd_.kd_joint[i] * (controller_lowcmd_.qd_des[i] - robot_lowdata_.qd[i]) 
+                                       + controller_lowcmd_.tau_ff[i];
+        controller_lowcmd_.tau_des[i] = clampMinMax(controller_lowcmd_.tau_des[i],T_MIN,T_MAX);
     }
     
-       control_cmd->cmds_[1].cmd_pack[0].p_cmd_ = (controller_lowcmd_.q_des[6] / whl_side_sign[0]) + whl_offset[0];
-       control_cmd->cmds_[1].cmd_pack[0].v_cmd_ = controller_lowcmd_.qd_des[6] / whl_side_sign[0];
-       control_cmd->cmds_[1].cmd_pack[0].kp_ = controller_lowcmd_.kp_joint[6];
-       control_cmd->cmds_[1].cmd_pack[0].kd_ = controller_lowcmd_.kd_joint[6];
-       control_cmd->cmds_[1].cmd_pack[0].t_ff_ = controller_lowcmd_.tau_ff[6] * whl_side_sign[0];
+    for (int i = 0; i < 6; i++)
+    {
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = (controller_lowcmd_.q_des[i] / leg_side_sign[i]) + leg_offset[i];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = controller_lowcmd_.qd_des[i] / leg_side_sign[i];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = controller_lowcmd_.kp_joint[i];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = controller_lowcmd_.kd_joint[i];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_ff[i]* leg_side_sign[i]; 
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_des[i]* leg_side_sign[i]; 
+    }
+    
+    //    control_cmd->cmds_[1].cmd_pack[0].p_cmd_ = (controller_lowcmd_.q_des[6] / whl_side_sign[0]) + whl_offset[0];
+    //    control_cmd->cmds_[1].cmd_pack[0].v_cmd_ = controller_lowcmd_.qd_des[6] / whl_side_sign[0];
+    //    control_cmd->cmds_[1].cmd_pack[0].kp_ = controller_lowcmd_.kp_joint[6];
+    //    control_cmd->cmds_[1].cmd_pack[0].kd_ = controller_lowcmd_.kd_joint[6];
+    //    control_cmd->cmds_[1].cmd_pack[0].t_ff_ = controller_lowcmd_.tau_ff[6] * whl_side_sign[0];
 
-       control_cmd->cmds_[1].cmd_pack[1].p_cmd_ = (controller_lowcmd_.q_des[7] / whl_side_sign[1]) + whl_offset[1];
-       control_cmd->cmds_[1].cmd_pack[1].v_cmd_ = controller_lowcmd_.qd_des[7] / whl_side_sign[1];
-       control_cmd->cmds_[1].cmd_pack[1].kp_ = controller_lowcmd_.kp_joint[7];
-       control_cmd->cmds_[1].cmd_pack[1].kd_ = controller_lowcmd_.kd_joint[7];
-       control_cmd->cmds_[1].cmd_pack[1].t_ff_ = controller_lowcmd_.tau_ff[7] * whl_side_sign[1];
+    //    control_cmd->cmds_[1].cmd_pack[1].p_cmd_ = (controller_lowcmd_.q_des[7] / whl_side_sign[1]) + whl_offset[1];
+    //    control_cmd->cmds_[1].cmd_pack[1].v_cmd_ = controller_lowcmd_.qd_des[7] / whl_side_sign[1];
+    //    control_cmd->cmds_[1].cmd_pack[1].kp_ = controller_lowcmd_.kp_joint[7];
+    //    control_cmd->cmds_[1].cmd_pack[1].kd_ = controller_lowcmd_.kd_joint[7];
+    //    control_cmd->cmds_[1].cmd_pack[1].t_ff_ = controller_lowcmd_.tau_ff[7] * whl_side_sign[1];
+       control_cmd->cmds_[1].cmd_pack[0].p_cmd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[0].v_cmd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[0].kp_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[0].kd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[0].t_ff_ = controller_lowcmd_.tau_des[6] * whl_side_sign[0];
+
+       control_cmd->cmds_[1].cmd_pack[1].p_cmd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[1].v_cmd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[1].kp_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[1].kd_ = 0.0;
+       control_cmd->cmds_[1].cmd_pack[1].t_ff_ = controller_lowcmd_.tau_des[7] * whl_side_sign[1];
 
        for (int i = 9; i < 15; i++)
     {
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = (controller_lowcmd_.q_des[i-1] / leg_side_sign[i-3]) + leg_offset[i-3];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = controller_lowcmd_.qd_des[i-1] / leg_side_sign[i-3];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = controller_lowcmd_.kp_joint[i-1];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = controller_lowcmd_.kd_joint[i-1];
-        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_ff[i-1]* leg_side_sign[i-3];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = (controller_lowcmd_.q_des[i-1] / leg_side_sign[i-3]) + leg_offset[i-3];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = controller_lowcmd_.qd_des[i-1] / leg_side_sign[i-3];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = controller_lowcmd_.kp_joint[i-1];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = controller_lowcmd_.kd_joint[i-1];
+        // control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_ff[i-1]* leg_side_sign[i-3];
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].p_cmd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].v_cmd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kp_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].kd_ = 0.0;
+        control_cmd->cmds_[i/6].cmd_pack[i-6*(i/6)].t_ff_ = controller_lowcmd_.tau_des[i-1]* leg_side_sign[i-3];
     }
 
-       control_cmd->cmds_[2].cmd_pack[3].p_cmd_ = (controller_lowcmd_.q_des[14] / whl_side_sign[2]) + whl_offset[2];
-       control_cmd->cmds_[2].cmd_pack[3].v_cmd_ = controller_lowcmd_.qd_des[14] / whl_side_sign[2];
-       control_cmd->cmds_[2].cmd_pack[3].kp_ = controller_lowcmd_.kp_joint[14];
-       control_cmd->cmds_[2].cmd_pack[3].kd_ = controller_lowcmd_.kd_joint[14];
-       control_cmd->cmds_[2].cmd_pack[3].t_ff_ = controller_lowcmd_.tau_ff[14] * whl_side_sign[2];
+    //    control_cmd->cmds_[2].cmd_pack[3].p_cmd_ = (controller_lowcmd_.q_des[14] / whl_side_sign[2]) + whl_offset[2];
+    //    control_cmd->cmds_[2].cmd_pack[3].v_cmd_ = controller_lowcmd_.qd_des[14] / whl_side_sign[2];
+    //    control_cmd->cmds_[2].cmd_pack[3].kp_ = controller_lowcmd_.kp_joint[14];
+    //    control_cmd->cmds_[2].cmd_pack[3].kd_ = controller_lowcmd_.kd_joint[14];
+    //    control_cmd->cmds_[2].cmd_pack[3].t_ff_ = controller_lowcmd_.tau_ff[14] * whl_side_sign[2];
 
-       control_cmd->cmds_[2].cmd_pack[4].p_cmd_ = (controller_lowcmd_.q_des[15] / whl_side_sign[3]) + whl_offset[3];
-       control_cmd->cmds_[2].cmd_pack[4].v_cmd_ = controller_lowcmd_.qd_des[15] / whl_side_sign[3];
-       control_cmd->cmds_[2].cmd_pack[4].kp_ = controller_lowcmd_.kp_joint[15];
-       control_cmd->cmds_[2].cmd_pack[4].kd_ = controller_lowcmd_.kd_joint[15];
-       control_cmd->cmds_[2].cmd_pack[4].t_ff_ = controller_lowcmd_.tau_ff[15] * whl_side_sign[3];
+    //    control_cmd->cmds_[2].cmd_pack[4].p_cmd_ = (controller_lowcmd_.q_des[15] / whl_side_sign[3]) + whl_offset[3];
+    //    control_cmd->cmds_[2].cmd_pack[4].v_cmd_ = controller_lowcmd_.qd_des[15] / whl_side_sign[3];
+    //    control_cmd->cmds_[2].cmd_pack[4].kp_ = controller_lowcmd_.kp_joint[15];
+    //    control_cmd->cmds_[2].cmd_pack[4].kd_ = controller_lowcmd_.kd_joint[15];
+    //    control_cmd->cmds_[2].cmd_pack[4].t_ff_ = controller_lowcmd_.tau_ff[15] * whl_side_sign[3];
+       control_cmd->cmds_[2].cmd_pack[3].p_cmd_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[3].v_cmd_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[3].kp_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[3].kd_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[3].t_ff_ = controller_lowcmd_.tau_des[14] * whl_side_sign[2];
+
+       control_cmd->cmds_[2].cmd_pack[4].p_cmd_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[4].v_cmd_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[4].kp_ = 0.0;
+       control_cmd->cmds_[2].cmd_pack[4].kd_ =0.0;
+       control_cmd->cmds_[2].cmd_pack[4].t_ff_ = controller_lowcmd_.tau_des[15] * whl_side_sign[3];
 
     if (count_usb_send<60)
     {
